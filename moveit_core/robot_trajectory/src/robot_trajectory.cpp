@@ -39,6 +39,7 @@
 #include <eigen_conversions/eigen_msg.h>
 #include <boost/math/constants/constants.hpp>
 #include <numeric>
+#include <ros/ros.h>
 
 robot_trajectory::RobotTrajectory::RobotTrajectory(const robot_model::RobotModelConstPtr &robot_model, const std::string &group) :
   robot_model_(robot_model),
@@ -240,6 +241,7 @@ void robot_trajectory::RobotTrajectory::getRobotTrajectoryMsg(moveit_msgs::Robot
       for (std::size_t j = 0 ; j < onedof.size() ; ++j)
       {
         trajectory.joint_trajectory.points[i].positions[j] = waypoints_[i]->getVariablePosition(onedof[j]->getFirstVariableIndex());
+        
         // if we have velocities/accelerations/effort, copy those too
         if (waypoints_[i]->hasVelocities())
           trajectory.joint_trajectory.points[i].velocities.push_back(waypoints_[i]->getVariableVelocity(onedof[j]->getFirstVariableIndex()));
@@ -267,8 +269,19 @@ void robot_trajectory::RobotTrajectory::getRobotTrajectoryMsg(moveit_msgs::Robot
     {
       trajectory.multi_dof_joint_trajectory.points[i].transforms.resize(mdof.size());
       for (std::size_t j = 0 ; j < mdof.size() ; ++j)
+      {
+        geometry_msgs::Twist velocity;
+        velocity.linear.x = waypoints_[i]->getVariableVelocity(j+0);
+        velocity.linear.y = waypoints_[i]->getVariableVelocity(j+1);
+        velocity.linear.z = waypoints_[i]->getVariableVelocity(j+2);
+        velocity.angular.x = waypoints_[i]->getVariableVelocity(j+3);
+        velocity.angular.y = waypoints_[i]->getVariableVelocity(j+4);
+        velocity.angular.z = waypoints_[i]->getVariableVelocity(j+5);
+        trajectory.multi_dof_joint_trajectory.points[i].velocities.push_back(velocity);
+
         tf::transformEigenToMsg(waypoints_[i]->getJointTransform(mdof[j]),
                                 trajectory.multi_dof_joint_trajectory.points[i].transforms[j]);
+      }
       if (duration_from_previous_.size() > i)
         trajectory.multi_dof_joint_trajectory.points[i].time_from_start = ros::Duration(total_time);
       else
