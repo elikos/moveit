@@ -279,6 +279,15 @@ void robot_trajectory::RobotTrajectory::getRobotTrajectoryMsg(moveit_msgs::Robot
         velocity.angular.z = waypoints_[i]->getVariableVelocity(j+5);
         trajectory.multi_dof_joint_trajectory.points[i].velocities.push_back(velocity);
 
+        geometry_msgs::Twist acceleration;
+        acceleration.linear.x = waypoints_[i]->getVariableAcceleration(j+0);
+        acceleration.linear.y = waypoints_[i]->getVariableAcceleration(j+1);
+        acceleration.linear.z = waypoints_[i]->getVariableAcceleration(j+2);
+        acceleration.angular.x = waypoints_[i]->getVariableAcceleration(j+3);
+        acceleration.angular.y = waypoints_[i]->getVariableAcceleration(j+4);
+        acceleration.angular.z = waypoints_[i]->getVariableAcceleration(j+5);
+        trajectory.multi_dof_joint_trajectory.points[i].accelerations.push_back(acceleration);
+
         tf::transformEigenToMsg(waypoints_[i]->getJointTransform(mdof[j]),
                                 trajectory.multi_dof_joint_trajectory.points[i].transforms[j]);
       }
